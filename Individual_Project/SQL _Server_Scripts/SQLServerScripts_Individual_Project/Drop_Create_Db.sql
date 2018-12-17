@@ -1,0 +1,86 @@
+USE master;  
+GO  
+
+DROP DATABASE IF EXISTS ChessGame;
+
+CREATE DATABASE ChessGame;  
+GO  
+
+--Verify the database files and sizes  
+SELECT name, size, size*1.0/128 AS [Size in MBs]   
+FROM sys.master_files  
+WHERE name = N'ChessGame';  
+GO
+
+USE ChessGame;
+GO
+
+CREATE TABLE Users (
+	Username NVARCHAR(20) NOT NULL,
+	Password NVARCHAR(20) NOT NULL,
+	FirstName NVARCHAR(50) NULL,
+	LastName NVARCHAR(50) NULL,
+	Email NVARCHAR(MAX) NULL,
+	Rights TINYINT DEFAULT(1) CHECK(Rights>=0 AND Rights <= 3),
+
+	CONSTRAINT PK_Username PRIMARY KEY CLUSTERED(Username)
+);
+
+
+CREATE TABLE Messages(
+	Id INT IDENTITY(1,1) NOT NULL,
+	Tstamp DATETIME NOT NULL,
+	Sender NVARCHAR(20) NOT NULL,
+	Receiver NVARCHAR(20) NOT NULL,
+	Data NVARCHAR(250) CHECK(LEN(Data) >= 1),
+
+	CONSTRAINT PK_MessagesId PRIMARY KEY CLUSTERED(Id),
+
+	CONSTRAINT FK_MessagesSender_Username FOREIGN KEY (Sender)
+		REFERENCES Users(Username)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION,
+
+	CONSTRAINT FK_MessagesReceiver_Username FOREIGN KEY (Receiver)
+		REFERENCES Users(Username)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+);
+
+
+
+CREATE TABLE Games (
+	Id INT IDENTITY(1,1) NOT NULL,
+	InProgress BIT NOT NULL,
+	--0: not active
+	--1: active
+
+	WhitePlayer NVARCHAR(20) NOT NULL,
+	BlackPlayer NVARCHAR(20) NOT NULL,
+	Turn NVARCHAR(20) NULL,
+
+	Winner NVARCHAR(20) NULL,
+	BoardData NVARCHAR(MAX) NOT NULL,
+
+	CONSTRAINT PK_GamesId PRIMARY KEY CLUSTERED(Id),
+
+	CONSTRAINT FK_GamesWhiteUser_Username FOREIGN KEY (WhitePlayer)
+		REFERENCES Users(Username)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION,
+
+	CONSTRAINT FK_GamesBlackUser_Username FOREIGN KEY (BlackPlayer)
+		REFERENCES Users(Username)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION,
+
+	CONSTRAINT FK_GamesTurn_Username FOREIGN KEY (Turn)
+		REFERENCES Users(Username)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION,
+
+	CONSTRAINT FK_Winner_Username FOREIGN KEY (Winner)
+		REFERENCES Users(Username)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+);
